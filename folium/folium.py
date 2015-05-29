@@ -24,23 +24,7 @@ from folium.six import text_type, binary_type, iteritems
 
 import sys
 
-
 ENV = Environment(loader=PackageLoader('folium', 'templates'))
-
-
-def initialize_notebook():
-    """Initialize the IPython notebook display elements."""
-    try:
-        from IPython.core.display import display, HTML
-    except ImportError:
-        print("IPython Notebook could not be loaded.")
-
-    lib_css = ENV.get_template('ipynb_init_css.html')
-    lib_js = ENV.get_template('ipynb_init_js.html')
-    leaflet_dvf = ENV.get_template('leaflet-dvf.markers.min.js')
-
-    display(HTML(lib_css.render()))
-    display(HTML(lib_js.render({'leaflet_dvf': leaflet_dvf.render()})))
 
 
 def iter_obj(type):
@@ -999,29 +983,9 @@ class Map(object):
 
     def _repr_html_(self):
         """Build the HTML representation for IPython."""
-        map_types = {'base': 'ipynb_repr.html',
-                     'geojson': 'ipynb_iframe.html'}
 
-        # Check current map type.
-        type_temp = map_types[self.map_type]
-        if self.render_iframe:
-            type_temp = 'ipynb_iframe.html'
-        templ = self.env.get_template(type_temp)
-        self._build_map(html_templ=templ, templ_type='temp')
-        if self.map_type == 'geojson' or self.render_iframe:
-            if not self.map_path:
-                raise ValueError('Use create_map to set the path!')
-            return templ.render(path=self.map_path, width=self.width,
-                                height=self.height)
-        return self.HTML
+        self._auto_bounds()
 
-    def display(self):
-        """Display the visualization inline in the IPython notebook.
+        templ = self.env.get_template('ipython.html')
+        return templ.render(self.template_vars)
 
-        This is deprecated, use the following instead::
-
-            from IPython.display import display
-            display(viz)
-        """
-        from IPython.core.display import display, HTML
-        display(HTML(self._repr_html_()))
